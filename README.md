@@ -92,4 +92,14 @@ The gateway phone can be the same phone you test on. It can send the OTP SMS to 
 
 ## Screenshots / Recording
 
-_Add your screenshots and screen recording here._
+Recorded on an Infinix X670 (Android 13) with Expo Go, Firebase Phone Authentication and test number `+92 305 5417130`.
+
+**Full flow:** enter number → OTP sent → correct code `246810` → ✅ success → wrong code `123456` → ❌ failure
+
+![OTP verification flow](docs/screenshots/otp-flow.webp)
+
+**Firebase Console → Authentication → Users:** the number was verified through Firebase Phone Auth
+
+![Firebase Authentication users](docs/screenshots/firebase-users.webp)
+
+**Screen recording:** see `docs/demo.mp4`
