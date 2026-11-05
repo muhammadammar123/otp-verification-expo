@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import FirebasePhoneAuth from './src/FirebasePhoneAuth';
+import { checkOtp, providerName, sendOtp } from './src/otpService';
 
 const OTP_LENGTH = 6;
 const RESEND_SECONDS = 30;
@@ -27,7 +27,7 @@ export default function App() {
   const [verified, setVerified] = useState(null); // true | false | null
   const [timer, setTimer] = useState(0);
   const otpRef = useRef(null);
-  const authRef = useRef(null); // Firebase phone auth (see src/FirebasePhoneAuth.js)
+  const [token, setToken] = useState(null); // id of the current verification (pinId / request_id)
 
   // E.164 phone number, e.g. +923001234567 (leading 0 of local number removed)
   const fullPhone = `${countryCode.trim()}${number.replace(/\D/g, '').replace(/^0+/, '')}`;
@@ -48,7 +48,8 @@ export default function App() {
     }
     setLoading(true);
     try {
-      await authRef.current.sendOtp(fullPhone);
+      const id = await sendOtp(fullPhone);
+      setToken(id);
       setOtp('');
       setStep('otp');
       setTimer(RESEND_SECONDS);
@@ -69,16 +70,11 @@ export default function App() {
     }
     setLoading(true);
     try {
-      await authRef.current.confirmOtp(otp);
-      setVerified(true);
+      const ok = await checkOtp(token, fullPhone, otp);
+      setVerified(ok); // true -> success screen, false -> failure screen
       setStep('result');
     } catch (e) {
-      if (e.code === 'auth/invalid-verification-code') {
-        setVerified(false); // wrong OTP -> failure screen
-        setStep('result');
-      } else {
-        setError(e.message);
-      }
+      setError(e.message);
     } finally {
       setLoading(false);
     }
@@ -218,8 +214,7 @@ export default function App() {
         {!!info && step === 'otp' && <Text style={styles.info}>{info}</Text>}
         {!!error && <Text style={styles.error}>{error}</Text>}
       </View>
-      <Text style={styles.footer}>Powered by Firebase Authentication</Text>
-      <FirebasePhoneAuth ref={authRef} />
+      <Text style={styles.footer}>SMS OTP powered by {providerName}</Text>
     </KeyboardAvoidingView>
   );
 }
