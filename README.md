@@ -16,13 +16,14 @@ The provider is chosen with one line in `.env` (`EXPO_PUBLIC_OTP_PROVIDER`):
 
 | Provider | API used | Free? | Works in Pakistan |
 |----------|----------|-------|-------------------|
-| **textbee.dev** (default) | `POST /api/v1/gateway/devices/{id}/send-sms` | Free plan, no card | ✅ sends from your own Android SIM |
+| **Firebase Phone Auth** (default) | Identity Toolkit `accounts:sendVerificationCode` → `accounts:signInWithPhoneNumber` | Spark plan, no card (test numbers). Real SMS on Blaze | ✅ allow Pakistan in the SMS region policy |
+| textbee.dev | `POST /api/v1/gateway/devices/{id}/send-sms` | Free plan, no card | ✅ sends from your own Android SIM |
 | SMS Gateway for Android | `POST https://api.sms-gate.app/3rdparty/v1/messages` | Free, open source | ✅ sends from your own Android SIM |
 | Infobip | 2FA API `/2fa/2/pin` + `/verify` | 60-day trial | depends on carrier routes |
 | Vonage | Verify API | €2 trial credit | depends on carrier routes |
 | Twilio | Verify API | Trial credit | depends on carrier routes |
 
-With **textbee** / **SMS Gateway**, the app generates a random 6-digit OTP (`src/otpCode.js`) and sends it by SMS through the third-party API. It then verifies the code the user types. Each code expires after 5 minutes, allows at most 5 attempts and can be used only once. With **Infobip / Vonage / Twilio**, the provider generates and checks the code on its own servers.
+With **textbee** / **SMS Gateway**, the app generates a random 6-digit OTP (`src/otpCode.js`) and sends it by SMS through the third-party API. It then verifies the code the user types. Each code expires after 5 minutes, allows at most 5 attempts and can be used only once. With **Firebase / Infobip / Vonage / Twilio**, the provider generates and checks the code on its own servers.
 
 ## Tech stack
 
@@ -34,6 +35,7 @@ With **textbee** / **SMS Gateway**, the app generates a random 6-digit OTP (`src
 ```
 App.js                     UI: phone screen → OTP screen → result screen
 src/otpService.js          Chooses the provider from .env
+src/providers/firebase.js  Firebase Phone Auth (REST API)
 src/otpCode.js             OTP generation, 5-minute expiry, attempt limit, one-time use
 src/providers/textbee.js   textbee.dev SMS API
 src/providers/smsgate.js   SMS Gateway for Android API
@@ -51,7 +53,23 @@ OTP screen   ── checkOtp(token, code)  ──▶ verified? (correct, not exp
 Result       ✅ "Verification Successful"  or  ❌ "Verification Failed"
 ```
 
-## Setup (textbee.dev, free, no card)
+## Setup (Firebase, free Spark plan, no card)
+
+1. Go to https://console.firebase.google.com, click **Create project**, and skip Google Analytics.
+2. Go to **Build → Authentication → Get started → Sign-in method → Phone → Enable → Save**.
+3. On the same Phone page, open **Phone numbers for testing** and add your number and a 6-digit code, e.g. `+92 305 5417130` → `123456`.
+4. Go to **Authentication → Settings → SMS region policy**. Choose **Allow** and add **Pakistan**. New projects block every region, including for test numbers.
+5. Go to **Project settings (⚙) → General** and copy the **Web API key**.
+6. Install and configure:
+   ```bash
+   npm install
+   cp .env.example .env   # EXPO_PUBLIC_OTP_PROVIDER=firebase, EXPO_PUBLIC_FIREBASE_API_KEY=...
+   npx expo start -c
+   ```
+
+On the free plan Firebase does not send an SMS to test numbers. It accepts the code you set in step 3, and verification goes through Firebase's real phone-auth API. If you upgrade to the Blaze plan, the same code sends real SMS to any number.
+
+## Setup (textbee.dev, real SMS from your own Android SIM)
 
 1. Create an account at https://textbee.dev.
 2. Install the **textbee** Android app (https://textbee.dev/download) on an Android phone with a SIM that has SMS balance.
