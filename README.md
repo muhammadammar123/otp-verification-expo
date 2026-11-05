@@ -68,4 +68,4 @@ Recorded on an Infinix X670 (Android 13) with Expo Go, Firebase Phone Authentica
 
 ![Firebase Authentication users](docs/screenshots/firebase-users.webp)
 
-**Screen recording:** see `docs/demo.mp4`
+**Screen recording:** [▶️ docs/demo.mp4](docs/demo.mp4) shows the complete flow: send OTP, verify the correct code, reject a wrong code
